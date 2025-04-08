@@ -1,136 +1,97 @@
-#include <Arduino.h>
+/*
+  WiFiAccessPoint.ino creates a WiFi access point and provides a web server on it.
 
-// THIS IS NODE 3944100465
+  Steps:
+  1. Connect to the access point "yourAp"
+  2. Point your web browser to http://192.168.4.1/H to turn the LED on or http://192.168.4.1/L to turn it off
+     OR
+     Run raw TCP "GET /H" and "GET /L" on PuTTY terminal with 192.168.4.1 as IP address and 80 as port
 
-// LIBRARIES
-#include "painlessMesh.h" // For mesh wifi
+  Created for arduino-esp32 on 04 July, 2018
+  by Elochukwu Ifediora (fedy0)
+*/
 
-// CONSTANTS
-#define   MESH_PREFIX     "IoTHub"     // Mesh WiFI name
-#define   MESH_PASSWORD   "IOAIHTHG"   // Mesh password
-#define   MESH_PORT       5555         // Mesh port
+#include <WiFi.h>
+// #include <NetworkClient.h>
+#include <WiFiAP.h>
 
-// FUNCTION DECLARATIONS(PLATIO MIGRATION ADDITION)
-void receivedCallback( uint32_t from, String &msg );
-uint32_t getRootId(painlessmesh::protocol::NodeTree nodeTree);
-void newConnectionCallback(uint32_t nodeId);
-void changedConnectionCallback();
-void nodeTimeAdjustedCallback(int32_t offset);
+#define LED_BUILTIN 5  // Set the GPIO pin where you connected your test LED or comment this line out if your dev board has a built-in LED
 
 
-// GLOBAL VARIABLES
-  // PINS
-  int ledPin = 13;
-  bool ledState = false;
+// Set these to your desired credentials.
+const char *ssid = "yourAP";
+const char *password = "yourPassword";
 
-  // TIMES
-  unsigned long timeSinceOn = millis();
-  unsigned long timeSinceUpdate = millis();
-  unsigned long timeSinceMsgReceived = millis();
-  unsigned long timeSinceDisplayUpdate = millis();
-  unsigned long lastBlinkTime = millis();
-
-  // WiFi COMMUNICATION MESSAGE
-  int lastValue = 0;
-  String receivedMsg;
-
-// INITIALIZING OBJECTS
-Scheduler userScheduler; // to control your personal task
-painlessMesh  mesh;
-void sendMessage() ; // Prototype so PlatformIO doesn't complain
-Task taskSendMessage( TASK_SECOND * 1 , TASK_FOREVER, &sendMessage );
-
-void setUpMesh() {
-  //mesh.setDebugMsgTypes( ERROR | MESH_STATUS | CONNECTION | SYNC | COMMUNICATION | GENERAL | MSG_TYPES | REMOTE ); // all types on
-  //mesh.setDebugMsgTypes( ERROR | STARTUP );  // set before init() so that you can see startup messages
-  mesh.setDebugMsgTypes( CONNECTION | SYNC );
-
-  mesh.init( MESH_PREFIX, MESH_PASSWORD, &userScheduler, MESH_PORT );
-  mesh.onReceive(&receivedCallback);
-  mesh.onNewConnection(&newConnectionCallback);
-  mesh.onChangedConnections(&changedConnectionCallback);
-  mesh.onNodeTimeAdjusted(&nodeTimeAdjustedCallback);
-
-  // Tells nodes that there is a root and to connect to it
-  mesh.setContainsRoot();
-
-  userScheduler.addTask( taskSendMessage );
-  taskSendMessage.enable();
-}
+WiFiServer server(80);
 
 void setup() {
+  pinMode(LED_BUILTIN, OUTPUT);
+
   Serial.begin(115200);
-  
-  pinMode(ledPin, OUTPUT);
-  
-  setUpMesh();
-}
+  Serial.println();
+  Serial.println("Configuring access point...");
 
-// Send message to root
-void sendMessage() {
-  String msg = "Callback:" + receivedMsg;
-  uint32_t rootId = getRootId(mesh.asNodeTree());
-  Serial.printf("sending %s to %u\n", msg, rootId);
-  mesh.sendSingle(rootId, msg);
-  if(atoi(receivedMsg.c_str()) == -2) {
-    taskSendMessage.setInterval( random( TASK_SECOND * 1, TASK_SECOND * 1.5)); 
-  } else {
-    taskSendMessage.setInterval( random( TASK_SECOND * 0.1, TASK_SECOND * 0.2 ));
+  // You can remove the password parameter if you want the AP to be open.
+  // a valid password must have more than 7 characters
+  if (!WiFi.softAP(ssid, password)) {
+    log_e("Soft AP creation failed.");
+    while (1);
   }
-}
+  IPAddress myIP = WiFi.softAPIP();
+  Serial.print("AP IP address: ");
+  Serial.println(myIP);
+  server.begin();
 
-// Recieve message
-void receivedCallback( uint32_t from, String &msg ) {
-  Serial.printf("startHere: Received from %u msg=%s\n", from, msg.c_str());
-  receivedMsg = msg.c_str();
-  timeSinceMsgReceived = millis();
-  if(atoi(msg.c_str()) != 0) {
-    if(atoi(msg.c_str()) == -1) {
-      lastValue = 0;  
-    } else if(atoi(msg.c_str()) != -2) {
-      lastValue = atoi(msg.c_str());
-    }
-  }
-}
-
-uint32_t getRootId(painlessmesh::protocol::NodeTree nodeTree) {
-  if (nodeTree.root) return nodeTree.nodeId;
-  for (auto&& s : nodeTree.subs) {
-    auto id = getRootId(s);
-    if (id != 0) return id;
-  }
-  return 0;
-}
-
-void newConnectionCallback(uint32_t nodeId) {
-    Serial.printf("--> startHere: New Connection, nodeId = %u\n", nodeId);
-}
-
-void changedConnectionCallback() {
-  Serial.printf("Changed connections\n");
-}
-
-void nodeTimeAdjustedCallback(int32_t offset) {
-  Serial.printf("Adjusted time %u. Offset = %d\n", mesh.getNodeTime(),offset);
-}
-
-unsigned long blinkTempo(int tempo, unsigned long lastBlinkTime) {
-  unsigned long newBlinkTime = lastBlinkTime;
-  //Serial.printf("millis() - tempo/1024 * 1000 > lastBlinkTime: %d - %d > %d\n", millis(), tempo, lastBlinkTime);
-  float bpm = (60000.0 / tempo) * 4;
-  if (millis() * 1000 - bpm * 1000 > lastBlinkTime * 1000) {
-    Serial.printf("ledState %d\n", ledState);
-    digitalWrite(ledPin, ledState);
-    ledState = !ledState;
-    newBlinkTime = millis();
-  }
-
-  return newBlinkTime;
+  Serial.println("Server started");
 }
 
 void loop() {
-    mesh.update();
-    //analogWrite(ledPin, lastValue / 4);
-    //Serial.printf("output value: %d\n", lastValue / 4);
-    lastBlinkTime = blinkTempo(lastValue, lastBlinkTime);
+  WiFiClient client = server.accept();  // listen for incoming clients
+
+  if (client) {                     // if you get a client,
+    Serial.println("New Client.");  // print a message out the serial port
+    String currentLine = "";        // make a String to hold incoming data from the client
+    while (client.connected()) {    // loop while the client's connected
+      if (client.available()) {     // if there's bytes to read from the client,
+        char c = client.read();     // read a byte, then
+        Serial.write(c);            // print it out the serial monitor
+        if (c == '\n') {            // if the byte is a newline character
+
+          // if the current line is blank, you got two newline characters in a row.
+          // that's the end of the client HTTP request, so send a response:
+          if (currentLine.length() == 0) {
+            // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
+            // and a content-type so the client knows what's coming, then a blank line:
+            client.println("HTTP/1.1 200 OK");
+            client.println("Content-type:text/html");
+            client.println();
+
+            // the content of the HTTP response follows the header:
+            client.print("Click <a href=\"/H\">here</a> to turn ON the LED.<br>");
+            client.print("Click <a href=\"/L\">here</a> to turn OFF the LED.<br>");
+
+            // The HTTP response ends with another blank line:
+            client.println();
+            // break out of the while loop:
+            break;
+          } else {  // if you got a newline, then clear currentLine:
+            currentLine = "";
+          }
+        } else if (c != '\r') {  // if you got anything else but a carriage return character,
+          currentLine += c;      // add it to the end of the currentLine
+        }
+
+        // Check to see if the client request was "GET /H" or "GET /L":
+        if (currentLine.endsWith("GET /H")) {
+          digitalWrite(LED_BUILTIN, HIGH);  // GET /H turns the LED on
+        }
+        if (currentLine.endsWith("GET /L")) {
+          digitalWrite(LED_BUILTIN, LOW);  // GET /L turns the LED off
+        }
+      }
+    }
+    // close the connection:
+    client.stop();
+    Serial.println("Client Disconnected.");
+  }
 }

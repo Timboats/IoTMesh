@@ -81,12 +81,12 @@ void sendMessage() {
   for(int queueNum = 0; queueNum < numNodesAllowed; queueNum++) {
     // Popping Queue when hits size limit
     if((queueList[queueNum]).isFull()) {
-      Serial.printf("queue is full. popping\n");
+      // Serial.printf("queue is full. popping\n");
       (queueList[queueNum]).pop(&msg); 
     }
   
     (queueList[queueNum]).peek(&frontOfStack);
-    Serial.printf("frontOfStack %s. receivedMsg %s\n", frontOfStack, receivedMsg);
+    // Serial.printf("frontOfStack %s. receivedMsg %s\n", frontOfStack, receivedMsg);
   
     // Send message if 
       // 1. received message is not the same as the front of the stack 
@@ -100,7 +100,7 @@ void sendMessage() {
         int nodeNum = 0;
         while (node != connectedNodes.end()) {
           if(nodeNum == queueNum) {
-            Serial.printf("sending %s to %u from stack %d\n", frontOfStack, *node, queueNum);
+            // Serial.printf("sending %s to %u from stack %d\n", frontOfStack, *node, queueNum);
             mesh.sendSingle(*node, frontOfStack);
             taskSendMessage.setInterval( random( TASK_SECOND * 0.1, TASK_SECOND * 0.2 ));  
           }
@@ -112,7 +112,7 @@ void sendMessage() {
         int nodeNum = 0;
         while (node != connectedNodes.end()) {
           if(nodeNum == queueNum) {
-            //Serial.printf("sending %s to %u from stack %d\n", frontOfStack, *node, queueNum);
+            // Serial.printf("sending %s to %u from stack %d\n", frontOfStack, *node, queueNum);
             String newMsg = "-2";
             mesh.sendSingle(*node, newMsg);
             taskSendMessage.setInterval( random( TASK_SECOND * 1, TASK_SECOND * 1.5 ));  
@@ -124,7 +124,7 @@ void sendMessage() {
   } 
 }
 void receivedCallback( uint32_t from, String &msg ) {
-  Serial.printf("Received from %u msg=%s\n", from, msg.c_str());
+  // Serial.printf("Received from %u msg=%s\n", from, msg.c_str());
   receivedMsg = msg.c_str();
 
   // Incoming message will be in the form of: "Callback:xxxxxx". Only want xxxxxx
@@ -137,10 +137,10 @@ void receivedCallback( uint32_t from, String &msg ) {
   for(int queueNum = 0; queueNum < numNodesAllowed; queueNum++) {
     // Update message received counter and pop off stack
     timeSinceMsgReceived = millis();
-    Serial.printf("substring %s\n", receivedSubMsg);
+    // Serial.printf("substring %s\n", receivedSubMsg);
     (queueList[queueNum]).peek(&frontOfStack);
     if(frontOfStack == receivedSubMsg) {
-      Serial.printf("Matches top of stack. popping\n");
+      // Serial.printf("Matches top of stack. popping\n");
       if(frontOfStack != "-2") { // Keeping track of last message sent/received for each node
         receivedMessages[queueNum] = frontOfStack;
       }
@@ -150,15 +150,15 @@ void receivedCallback( uint32_t from, String &msg ) {
 }
 
 void newConnectionCallback(uint32_t nodeId) {
-    Serial.printf("--> startHere: New Connection, nodeId = %u\n", nodeId);
+    // Serial.printf("--> startHere: New Connection, nodeId = %u\n", nodeId);
 }
 
 void changedConnectionCallback() {
-  Serial.printf("Changed connections\n");
+  // Serial.printf("Changed connections\n");
 }
 
 void nodeTimeAdjustedCallback(int32_t offset) {
-    Serial.printf("Adjusted time %u. Offset = %d\n", mesh.getNodeTime(),offset);
+    // Serial.printf("Adjusted time %u. Offset = %d\n", mesh.getNodeTime(),offset);
 }
 
 // Updating OLED Display
@@ -245,7 +245,7 @@ unsigned long blinkTempo(int tempo, unsigned long lastBlinkTime) {
   //Serial.printf("millis() - tempo/1024 * 1000 > lastBlinkTime: %d - %d > %d\n", millis(), tempo, lastBlinkTime);
   float bpm = (60000.0 / tempo) * 4;
   if (millis() * 1000 - bpm * 1000 > lastBlinkTime * 1000) {
-    Serial.printf("ledState %d\n", ledState);
+    // Serial.printf("ledState %d\n", ledState);
     digitalWrite(ledPin, ledState);
     ledState = !ledState;
     newBlinkTime = millis();
@@ -279,16 +279,16 @@ int displayValues() {
   int shiftedInDecimalNumber = 0;
   for(int i = 0; i < shift.getDataWidth(); i++) {
     shiftedInDecimalNumber += shift.state(i) * pow(2, shift.getDataWidth() - i - 1);
-    Serial.print( shift.state(i) );
+    // Serial.print( shift.state(i) );
   }
-  Serial.println();
-  Serial.println("That number in dec was: "+ String(shiftedInDecimalNumber));
+  // Serial.println();
+  // Serial.println("That number in dec was: "+ String(shiftedInDecimalNumber));
   return shiftedInDecimalNumber;
 }
 
 void addNumToStr(int num) {
   if(numPadStr.length() <= 3) {
-      Serial.printf("adding %d to the number pad stack\n", num);
+      // Serial.printf("adding %d to the number pad stack\n", num);
       numPadStr += String(num);
       currStrLen++;
   }
@@ -299,7 +299,7 @@ void setup() {
 
   // For OLED Display Setup
   if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3D for 128x64
-    Serial.println(F("SSD1306 allocation failed"));
+    // Serial.println(F("SSD1306 allocation failed"));
     for(;;);
   }
   delay(1000);
@@ -333,6 +333,7 @@ void loop() {
   int numpadNumber = 0;
   if(shift.update()) {
     numpadNumber = displayValues();
+    Serial.println(numpadNumber); //dont delete this
   }
 
   switch(numpadNumber) {
@@ -409,7 +410,7 @@ void loop() {
       break;
   }
 
-  Serial.println("Current num pad string: " + numPadStr);
+  // Serial.println("Current num pad string: " + numPadStr);
 
   // Updating Display
   initializeDisplay();
