@@ -61,7 +61,7 @@ void setUpMesh() {
 void setup() {
   Serial.begin(115200);
   
-  pinMode(2, OUTPUT);
+  pinMode(ledPin, OUTPUT);
   
   setUpMesh();
 }
