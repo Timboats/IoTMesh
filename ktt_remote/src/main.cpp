@@ -4,9 +4,8 @@
 #include "painlessMesh.h"      // Mesh WiFi
 #include <cppQueue.h>          // Queue
 #include <StackArray.h>        // stack (https://github.com/oogre/StackArray)
-#include <Wire.h>              // Communicating with I2C for OLED Screen
-#include <Adafruit_GFX.h>      // For OLED Screen
-#include <Adafruit_SSD1306.h>  // For OLED Screen
+#include <Adafruit_GFX.h>      // For TFT LCD Screen
+#include "Adafruit_ILI9341.h"  // For TFT LCD Screen
 #include "ShiftIn.h"
 #include <math.h>
 
