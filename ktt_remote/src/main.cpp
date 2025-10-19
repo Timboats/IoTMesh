@@ -16,9 +16,19 @@
 #define SCREEN_WIDTH 128             // OLED display width, in pixels
 #define SCREEN_HEIGHT 64             // OLED display height, in pixels
 
+
+//Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
 void setup()
 {
-
+  /*
+  tft.begin();
+  tft.setRotation(1);  // Landscape mode
+  tft.fillScreen(ILI9341_BLACK);
+  tft.setTextColor(ILI9341_WHITE);
+  tft.setTextSize(2);
+  tft.setCursor(40, 10);
+  tft.println("Tempo Trainer");
+  */
 }
 
 void loop()
