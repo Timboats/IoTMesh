@@ -10,6 +10,18 @@
 #include "ShiftIn.h"
 #include <math.h>
 
+// TASK HANDLERS
+TaskHandle_t uiHandler;
+
+// TASK FUNCTIONS 
+void uiTask(void* params);
+
+// FUNCTION DECLARATIONS
+void initializeTFT();
+
+// PERIPHERALS
+Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST); // Bad practice to have globals but for simplicity in this example we will do it
+
 void setup()
 {
 
