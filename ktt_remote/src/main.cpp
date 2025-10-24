@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include "config.h"
 
 // LIBRARIES
 #include "painlessMesh.h"      // Mesh WiFi
@@ -9,12 +10,17 @@
 #include "ShiftIn.h"
 #include <math.h>
 
-// CONSTANTS
-#define MESH_PREFIX "IoTHub"     // Mesh WiFI name
-#define MESH_PASSWORD "IOAIHTHG"   // Mesh password
-#define MESH_PORT 5555         // Mesh port
-#define SCREEN_WIDTH 128             // OLED display width, in pixels
-#define SCREEN_HEIGHT 64             // OLED display height, in pixels
+// TASK HANDLERS
+TaskHandle_t uiHandler;
+
+// TASK FUNCTIONS 
+void uiTask(void* params);
+
+// FUNCTION DECLARATIONS
+void initializeTFT();
+
+// PERIPHERALS
+Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST); // Bad practice to have globals but for simplicity in this example we will do it
 
 
 //Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
