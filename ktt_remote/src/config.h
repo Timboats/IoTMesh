@@ -9,7 +9,12 @@
 #define TFT_CS 13 // LCD Chip-Select pin
 #define TFT_DC 33 // LCD Data/Command pin
 #define TFT_RST 32 // LCD Reset pin
-//TODO D-PAD pins later
+#define DPAD_UP 5 // D-PAD Up pin
+#define DPAD_DOWN 17 // D-PAD Down pin
+#define DPAD_LEFT 4 // D-PAD Left pin
+#define DPAD_RIGHT 16 // D-PAD Right pin
+#define ENTER_BUTTON 15 // Enter button pin
+#define BACK_BUTTON 14 // Back button pin
 
 // Other defs
 
