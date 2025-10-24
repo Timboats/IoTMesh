@@ -20,13 +20,15 @@ void uiTask(void* params);
 void initializeTFT();
 
 // PERIPHERALS
-Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST); // Bad practice to have globals but for simplicity in this example we will do it
+Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, SPI_MOSI, SPI_SCK, TFT_RST, SPI_MISO); // Bad practice to have globals but for simplicity in this example we will do it
 
-
-//Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
 void setup()
 {
-  
+  pinMode(TFT_CS, OUTPUT);
+  pinMode(TFT_DC, OUTPUT);
+  pinMode(TFT_RST, OUTPUT);
+  // digitalWrite(TFT_CS, HIGH); // Deselect TFT
+
   tft.begin();
   tft.setRotation(1);  // Landscape mode
   initializeTFT();
@@ -46,7 +48,6 @@ void loop()
 }
 
 void initializeTFT(){
-  /*
   tft.fillScreen(ILI9341_BLACK);  // Clear entire screen
 
   // Header
@@ -54,7 +55,7 @@ void initializeTFT(){
   tft.setTextColor(ILI9341_WHITE);
   tft.setCursor(10, 10);
   tft.print("Welcome Screen");
-
+  /*
   // Navigation
   tft.setTextSize(1);
   tft.setTextColor(ILI9341_CYAN);

@@ -15,6 +15,9 @@
 #define DPAD_RIGHT 16 // D-PAD Right pin
 #define ENTER_BUTTON 15 // Enter button pin
 #define BACK_BUTTON 14 // Back button pin
+#define SPI_MOSI 26 // SPI MOSI pin
+#define SPI_MISO 27 // SPI MISO pin
+#define SPI_SCK 25 // SPI Clock pin
 
 // Other defs
 
