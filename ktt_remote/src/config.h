@@ -21,6 +21,5 @@
 #define MESH_PREFIX "IoTHub" // Mesh WiFI name
 #define MESH_PASSWORD "IOAIHTHG" // Mesh password
 #define MESH_PORT 5555 // Mesh port
-#define SCREEN_WIDTH 128 // LCD display width, in pixels
-#define SCREEN_HEIGHT 64 // LCD display height, in pixels
-//TODO update screen width and height for TFT/LCD
+#define SCREEN_WIDTH 320 // LCD display width, in pixels
+#define SCREEN_HEIGHT 240 // LCD display height, in pixels
