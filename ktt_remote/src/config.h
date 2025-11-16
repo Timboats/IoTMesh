@@ -26,3 +26,10 @@
 #define MESH_PORT 5555 // Mesh port
 #define SCREEN_WIDTH 320 // LCD display width, in pixels
 #define SCREEN_HEIGHT 240 // LCD display height, in pixels
+
+// OTA defines
+#define OTA_SSID "KTTREM" // hotspot ssid
+#ifdef OTA_SSID
+    #define OTA_PSK "kttrem2018"
+    #define OTA_host "kttremotedev"
+#endif

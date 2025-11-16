@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include "config.h"
 
+
 // LIBRARIES
 #include "painlessMesh.h"      // Mesh WiFi
 #include <cppQueue.h>          // Queue
@@ -9,6 +10,9 @@
 #include "Adafruit_ILI9341.h"  // For TFT LCD Screen
 #include "ShiftIn.h"
 #include <math.h>
+#include "ArduinoOTA.h"
+#include <WiFi.h>
+
 
 // TASK HANDLERS
 TaskHandle_t uiHandler;
@@ -22,12 +26,74 @@ void initializeTFT();
 // PERIPHERALS
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, SPI_MOSI, SPI_SCK, TFT_RST, SPI_MISO); // Bad practice to have globals but for simplicity in this example we will do it
 
+// Global vars
+bool otaEnable = false;
 void setup()
 {
   pinMode(TFT_CS, OUTPUT);
   pinMode(TFT_DC, OUTPUT);
   pinMode(TFT_RST, OUTPUT);
   // digitalWrite(TFT_CS, HIGH); // Deselect TFT
+
+  pinMode(DPAD_DOWN, INPUT);
+  pinMode(DPAD_UP, INPUT);
+  pinMode(DPAD_LEFT, INPUT);
+  pinMode(DPAD_RIGHT, INPUT);
+  pinMode(ENTER_BUTTON, INPUT);
+  pinMode(BACK_BUTTON, INPUT); 
+
+  if(!digitalRead(DPAD_UP) && !digitalRead(DPAD_DOWN) && !digitalRead(DPAD_LEFT) && !digitalRead(DPAD_RIGHT))
+  {
+    otaEnable = true;
+  }
+
+  // OTA init
+  #ifdef OTA_SSID
+    WiFi.mode(WIFI_AP);
+    WiFi.begin(OTA_SSID, OTA_PSK);
+
+    while(WiFi.waitForConnectResult() != WL_CONNECTED) 
+    {
+      Serial.println("Connection Failed! Rebooting...");
+      delay(5000);
+      ESP.restart();
+    }
+
+    ArduinoOTA.setHostname(OTA_host);
+
+    ArduinoOTA
+      .onStart([]() {
+        String type;
+        if (ArduinoOTA.getCommand() == U_FLASH)
+          type = "sketch";
+        else // U_SPIFFS
+          type = "filesystem";
+
+        // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
+        Serial.println("Start updating " + type);
+      })
+      .onEnd([]() {
+        Serial.println("\nEnd");
+      })
+      .onProgress([](unsigned int progress, unsigned int total) {
+        Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+      })
+      .onError([](ota_error_t error) {
+        Serial.printf("Error[%u]: ", error);
+        if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+        else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+        else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+        else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+        else if (error == OTA_END_ERROR) Serial.println("End Failed");
+      });
+
+    ArduinoOTA.begin();
+
+    if(otaEnable)
+    {
+      return;
+    }
+  #endif
 
   tft.begin();
   tft.setRotation(1);  // Landscape mode
@@ -44,6 +110,12 @@ void setup()
 
 void loop()
 {
+  #ifdef OTA_SSID
+    while(otaEnable)
+    {
+      ArduinoOTA.handle();
+    }
+  #endif
 
 }
 
