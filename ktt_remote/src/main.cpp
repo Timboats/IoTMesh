@@ -39,7 +39,7 @@ Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, SPI_MOSI, SPI_SCK, TFT_R
 bool otaEnable = false;
 const int DEV_COUNT = 4;
 int selectedDevice = 1;
-int selectedValue = 50;
+int selectedValue = 150;
 uint8_t focusIndex = 0;
 
 unsigned long lastDebounce = 0; // for input buttons
