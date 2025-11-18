@@ -30,6 +30,7 @@ Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, SPI_MOSI, SPI_SCK, TFT_R
 bool otaEnable = false;
 void setup()
 {
+  Serial.begin(115200);
   pinMode(TFT_CS, OUTPUT);
   pinMode(TFT_DC, OUTPUT);
   pinMode(TFT_RST, OUTPUT);
@@ -42,57 +43,56 @@ void setup()
   pinMode(ENTER_BUTTON, INPUT);
   pinMode(BACK_BUTTON, INPUT); 
 
-  if(!digitalRead(DPAD_UP) && !digitalRead(DPAD_DOWN) && !digitalRead(DPAD_LEFT) && !digitalRead(DPAD_RIGHT))
-  {
-    otaEnable = true;
-  }
-
   // OTA init
   #ifdef OTA_SSID
-    WiFi.mode(WIFI_AP);
-    WiFi.begin(OTA_SSID, OTA_PSK);
-
-    while(WiFi.waitForConnectResult() != WL_CONNECTED) 
+    if(!digitalRead(DPAD_UP) && !digitalRead(DPAD_DOWN) && !digitalRead(DPAD_LEFT) && !digitalRead(DPAD_RIGHT))
     {
-      Serial.println("Connection Failed! Rebooting...");
-      delay(5000);
-      ESP.restart();
+      otaEnable = true;
+      Serial.println("Entering OTA Update mode");
     }
-
-    ArduinoOTA.setHostname(OTA_host);
-
-    ArduinoOTA
-      .onStart([]() {
-        String type;
-        if (ArduinoOTA.getCommand() == U_FLASH)
-          type = "sketch";
-        else // U_SPIFFS
-          type = "filesystem";
-
-        // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
-        Serial.println("Start updating " + type);
-      })
-      .onEnd([]() {
-        Serial.println("\nEnd");
-      })
-      .onProgress([](unsigned int progress, unsigned int total) {
-        Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-      })
-      .onError([](ota_error_t error) {
-        Serial.printf("Error[%u]: ", error);
-        if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
-        else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
-        else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
-        else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-        else if (error == OTA_END_ERROR) Serial.println("End Failed");
-      });
-
-    ArduinoOTA.begin();
 
     if(otaEnable)
     {
+
+      WiFi.mode(WIFI_AP);
+      WiFi.softAP(OTA_SSID, OTA_PSK);
+
+      IPAddress ip = WiFi.softAPIP();
+      Serial.printf("IP addr: ");
+      Serial.println(ip);
+
+      ArduinoOTA.setHostname(OTA_host);
+
+      ArduinoOTA
+        .onStart([]() {
+          String type;
+          if (ArduinoOTA.getCommand() == U_FLASH)
+            type = "sketch";
+          else // U_SPIFFS
+            type = "filesystem";
+
+          // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
+          Serial.println("Start updating " + type);
+        })
+        .onEnd([]() {
+          Serial.println("\nEnd");
+        })
+        .onProgress([](unsigned int progress, unsigned int total) {
+          Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+        })
+        .onError([](ota_error_t error) {
+          Serial.printf("Error[%u]: ", error);
+          if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+          else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+          else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+          else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+          else if (error == OTA_END_ERROR) Serial.println("End Failed");
+        });
+
+      ArduinoOTA.begin();
       return;
     }
+
   #endif
 
   tft.begin();
