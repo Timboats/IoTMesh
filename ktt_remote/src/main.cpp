@@ -45,7 +45,7 @@ void setup()
 
   // OTA init
   #ifdef OTA_SSID
-    if(!digitalRead(DPAD_UP) && !digitalRead(DPAD_DOWN) && !digitalRead(DPAD_LEFT) && !digitalRead(DPAD_RIGHT))
+    if(!digitalRead(DPAD_UP) && !digitalRead(DPAD_DOWN)) // TODO require left and right keys also later
     {
       otaEnable = true;
       Serial.println("Entering OTA Update mode");
