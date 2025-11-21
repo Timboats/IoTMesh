@@ -158,7 +158,7 @@ void loop()
     }
     drawSendPage();
   }
-  else if(pressed(DPAD_LEFT)) 
+  else if(pressed(DPAD_RIGHT)) 
   {
     if(focusIndex == 0) 
     {
