@@ -44,6 +44,7 @@ uint8_t focusIndex = 0;
 
 unsigned long lastDebounce = 0; // for input buttons
 const unsigned long DEBOUNCE_DELAY = 200;
+int totalDevices = 0;
 
 
 void setup()
@@ -239,6 +240,7 @@ void drawSendPage()
   tft.setCursor(20, y0);
   tft.print("Device: ");
   tft.print(selectedDevice);
+  tft.printf("(%d)", totalDevices);
 
   // Value line
   int16_t y1 = y0 + lineH;
@@ -263,6 +265,7 @@ void sendToDevice(int deviceId, int value)
 {
   SimpleList<uint32_t> nodes = mesh.getNodeList();
   int numNodes = nodes.size();
+  totalDevices = nodes.size();
   
   if (deviceId >= 1 && deviceId <= numNodes) {
     auto it = nodes.begin();
