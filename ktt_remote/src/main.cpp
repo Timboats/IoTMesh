@@ -28,6 +28,7 @@ void uiTask(void* params);
 void initializeTFT();
 bool pressed(uint8_t pin);
 void drawSendPage();
+void drawNoConnectionPage();
 
 void updateDeviceLine();
 void updateValueLine();
@@ -122,7 +123,7 @@ void setup()
   tft.setRotation(3);  // Landscape mode
 
   initMesh();
-  drawSendPage();
+  drawNoConnectionPage();
   // initializeTFT();
   /*
   #the stuff below can be replaced
@@ -290,7 +291,8 @@ void updateDeviceLine() {
   tft.printf("(%d)", totalDevices);
 }
 
-void updateValueLine() {
+void updateValueLine() 
+{
   int16_t w = tft.width();
   int16_t y1 = 80;
 
@@ -349,4 +351,13 @@ void initMesh()
 
   mesh.setContainsRoot();
   mesh.setRoot();
+}
+void drawNoConnectionPage()
+{
+  tft.fillScreen(ILI9341_BLACK);
+  tft.setCursor(40, SCREEN_HEIGHT / 2);
+  tft.setTextSize(2);
+  tft.setTextColor(ILI9341_RED);
+  tft.print("No Trainer Connected!");
+
 }
