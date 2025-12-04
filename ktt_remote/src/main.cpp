@@ -339,6 +339,8 @@ void initMesh()
   mesh.onReceive(&receivedCallback);
   mesh.onNewConnection([](uint32_t nodeId){
     Serial.printf("🔗 New connection to Node %u\n", nodeId);
+    totalDevices = totalDevices + 1;
+
   });
   mesh.onChangedConnections([](){
     Serial.println("🔄 Connection list changed");
