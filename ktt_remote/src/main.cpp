@@ -149,7 +149,8 @@ void loop()
   if(pressed(DPAD_UP) || pressed(DPAD_DOWN)) 
   {
     focusIndex = 1 - focusIndex;
-    drawSendPage();
+    updateDeviceLine();
+    //drawSendPage();
   }
   else if(pressed(DPAD_LEFT)) 
   {
