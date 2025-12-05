@@ -255,7 +255,7 @@ void sendToDevice(int deviceId, int value)
 {
   SimpleList<uint32_t> nodes = mesh.getNodeList();
   int numNodes = nodes.size();
-  totalDevices = nodes.size();
+  totalDevices = numNodes;
   
   if (deviceId >= 1 && deviceId <= numNodes) {
     auto it = nodes.begin();
@@ -283,20 +283,11 @@ void initMesh()
   mesh.onReceive(&receivedCallback);
   mesh.onNewConnection([](uint32_t nodeId){
     Serial.printf("🔗 New connection to Node %u\n", nodeId);
-    totalDevices++;
-    drawSendPage();
 
   });
   mesh.onChangedConnections([](){
     Serial.println("🔄 Connection list changed");
-  });
-  mesh.onNodeTimeAdjusted([](int32_t offset){
-    Serial.printf("⏱ Time adjusted by %d ms\n", offset);
-  });
-
-  mesh.onDroppedConnection([](uint32_t nodeId){
-    Serial.printf("Lost connection to Node %u\n", nodeId);
-    totalDevices--;
+    totalDevices = mesh.getNodeList().size();
     if(!totalDevices)
     {
       drawNoConnectionPage();
@@ -305,7 +296,14 @@ void initMesh()
     {
       drawSendPage();
     }
+    
+  });
+  mesh.onNodeTimeAdjusted([](int32_t offset){
+    Serial.printf("⏱ Time adjusted by %d ms\n", offset);
+  });
 
+  mesh.onDroppedConnection([](uint32_t nodeId){
+    Serial.printf("Lost connection to Node %u\n", nodeId);
   });
 
   mesh.setContainsRoot();
