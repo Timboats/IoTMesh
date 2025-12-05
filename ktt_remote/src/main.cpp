@@ -24,7 +24,6 @@ painlessMesh mesh;
 void uiTask(void* params);
 
 // FUNCTION DECLARATIONS
-void initializeTFT();
 bool pressed(uint8_t pin);
 void drawSendPage();
 void drawNoConnectionPage();
@@ -45,6 +44,7 @@ const int DEV_COUNT = 4;
 int selectedDevice = 1;
 int selectedValue = 150;
 uint8_t focusIndex = 0;
+uint8_t currentPage = NO_CONNECT_PAGE;
 
 unsigned long lastDebounce = 0; // for input buttons
 const unsigned long DEBOUNCE_DELAY = 200;
@@ -148,85 +148,66 @@ void loop()
   mesh.update();
 
   // Device connection check
-  if((millis() - timeSinceLastCallback) > MAX_DISCONNECT_TIMEOUT)
+  if((currentPage != NO_CONNECT_PAGE) && ((millis() - timeSinceLastCallback) > MAX_DISCONNECT_TIMEOUT))
   {
-    // drawNoConnectionPage();
+    drawNoConnectionPage();
   }
 
   // —— SWITCH FOCUS ——
-  if(pressed(DPAD_UP) || pressed(DPAD_DOWN)) 
+  if(currentPage == SEND_PAGE)
   {
-    focusIndex = 1 - focusIndex;
-    //updateDeviceLine();
-    drawSendPage();
-  }
-  else if(pressed(DPAD_LEFT)) 
-  {
-    if(focusIndex == 0) 
+    if(pressed(DPAD_UP) || pressed(DPAD_DOWN)) 
     {
-      selectedDevice = (selectedDevice + DEV_COUNT - 2) % DEV_COUNT + 1;
-      updateDeviceLine();
-    } 
-    else 
-    {
-      if (selectedValue > 0) selectedValue--;
-      updateValueLine();
+      focusIndex = 1 - focusIndex;
+      //updateDeviceLine();
+      drawSendPage();
     }
-    //drawSendPage();
-  }
-  else if(pressed(DPAD_RIGHT)) 
-  {
-    if(focusIndex == 0) 
+    else if(pressed(DPAD_LEFT)) 
     {
-      selectedDevice = selectedDevice % DEV_COUNT + 1;
-      updateDeviceLine();
-    } 
-    else 
-    {
-      selectedValue++;
-      updateValueLine();
+      if(focusIndex == 0) 
+      {
+        selectedDevice = (selectedDevice + DEV_COUNT - 2) % DEV_COUNT + 1;
+        updateDeviceLine();
+      } 
+      else 
+      {
+        if (selectedValue > 0) selectedValue--;
+        updateValueLine();
+      }
+      //drawSendPage();
     }
-    //drawSendPage();
-  }
-  else if(pressed(ENTER_BUTTON)) 
-  {
-    sendToDevice(selectedDevice, selectedValue);
-    tft.fillScreen(ILI9341_BLACK);
-    tft.setTextSize(2);
-    tft.setTextColor(ILI9341_GREEN);
-    tft.setCursor(20, tft.height()/2 - 10);
-    tft.print("Sent!");
-    delay(800);
-    drawSendPage();
-  }
-  else if(pressed(BACK_BUTTON)) 
-  {
+    else if(pressed(DPAD_RIGHT)) 
+    {
+      if(focusIndex == 0) 
+      {
+        selectedDevice = selectedDevice % DEV_COUNT + 1;
+        updateDeviceLine();
+      } 
+      else 
+      {
+        selectedValue++;
+        updateValueLine();
+      }
+      //drawSendPage();
+    }
+    else if(pressed(ENTER_BUTTON)) 
+    {
+      sendToDevice(selectedDevice, selectedValue);
+      tft.fillScreen(ILI9341_BLACK);
+      tft.setTextSize(2);
+      tft.setTextColor(ILI9341_GREEN);
+      tft.setCursor(20, tft.height()/2 - 10);
+      tft.print("Sent!");
+      delay(800);
+      drawSendPage();
+    }
+    else if(pressed(BACK_BUTTON)) 
+    {
     focusIndex = 0;
     drawSendPage();
+    }
   }
   delay(10);
-}
-
-void initializeTFT(){
-  tft.fillScreen(ILI9341_BLACK);  // Clear entire screen
-
-  // Header
-  tft.setTextSize(2);
-  tft.setTextColor(ILI9341_WHITE);
-  tft.setCursor(10, 10);
-  tft.print("Welcome Screen");
-  /*
-  // Navigation
-  tft.setTextSize(1);
-  tft.setTextColor(ILI9341_CYAN);
-  tft.setCursor(10, 40);
-  tft.print("B1 to Welcome <-");
-  tft.setCursor(10, 60);
-  tft.print("B2 to Broadcasting ->");
-
-  // Optional: add dividing line
-  tft.drawLine(0, 80, 240, 80, ILI9341_DARKGREY);
-  */
 }
 
 bool pressed(uint8_t pin) 
@@ -240,6 +221,8 @@ bool pressed(uint8_t pin)
 
 void drawSendPage() 
 {
+  currentPage = SEND_PAGE; // sets current page
+
   tft.fillScreen(ILI9341_BLACK);
   tft.setTextSize(2);
 
@@ -373,6 +356,8 @@ void initMesh()
 }
 void drawNoConnectionPage()
 {
+  currentPage = NO_CONNECT_PAGE; // sets currentPage
+
   tft.fillScreen(ILI9341_BLACK);
   tft.setCursor(40, SCREEN_HEIGHT / 2);
   tft.setTextSize(2);

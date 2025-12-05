@@ -24,9 +24,16 @@
 #define MESH_PREFIX "IoTHub" // Mesh WiFI name
 #define MESH_PASSWORD "IOAIHTHG" // Mesh password
 #define MESH_PORT 5555 // Mesh port
+
 #define SCREEN_WIDTH 320 // LCD display width, in pixels
 #define SCREEN_HEIGHT 240 // LCD display height, in pixels
+
+#define NO_CONNECT_PAGE 0 // UI No connection page
+#define SEND_PAGE 1 // UI send to trainer page
+
 #define MAX_DISCONNECT_TIMEOUT 5000 // max time til last callback in ms
+
+
 
 // OTA defines
 #define OTA_SSID "KTTREM" // hotspot ssid
