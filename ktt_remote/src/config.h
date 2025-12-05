@@ -31,10 +31,6 @@
 #define NO_CONNECT_PAGE 0 // UI No connection page
 #define SEND_PAGE 1 // UI send to trainer page
 
-#define MAX_DISCONNECT_TIMEOUT 5000 // max time til last callback in ms
-
-
-
 // OTA defines
 #define OTA_SSID "KTTREM" // hotspot ssid
 #ifdef OTA_SSID

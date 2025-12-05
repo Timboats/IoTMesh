@@ -28,9 +28,6 @@ bool pressed(uint8_t pin);
 void drawSendPage();
 void drawNoConnectionPage();
 
-void updateDeviceLine();
-void updateValueLine();
-
 void sendToDevice(int deviceId, int value);
 void receivedCallback(uint32_t from, String &msg);
 void initMesh();
@@ -49,7 +46,6 @@ uint8_t currentPage = NO_CONNECT_PAGE;
 unsigned long lastDebounce = 0; // for input buttons
 const unsigned long DEBOUNCE_DELAY = 200;
 
-unsigned long timeSinceLastCallback = 0;
 int totalDevices = 0;
 
 
@@ -147,12 +143,6 @@ void loop()
 
   mesh.update();
 
-  // Device connection check
-  if((currentPage != NO_CONNECT_PAGE) && ((millis() - timeSinceLastCallback) > MAX_DISCONNECT_TIMEOUT))
-  {
-    drawNoConnectionPage();
-  }
-
   // —— SWITCH FOCUS ——
   if(currentPage == SEND_PAGE)
   {
@@ -167,12 +157,12 @@ void loop()
       if(focusIndex == 0) 
       {
         selectedDevice = (selectedDevice + DEV_COUNT - 2) % DEV_COUNT + 1;
-        updateDeviceLine();
+        drawSendPage();
       } 
       else 
       {
         if (selectedValue > 0) selectedValue--;
-        updateValueLine();
+        drawSendPage();
       }
       //drawSendPage();
     }
@@ -181,12 +171,12 @@ void loop()
       if(focusIndex == 0) 
       {
         selectedDevice = selectedDevice % DEV_COUNT + 1;
-        updateDeviceLine();
+        drawSendPage();
       } 
       else 
       {
         selectedValue++;
-        updateValueLine();
+        drawSendPage();
       }
       //drawSendPage();
     }
@@ -261,44 +251,6 @@ void drawSendPage()
   tft.print("<U/D> switch   <L/R> change   [Select] send");
 }
 
-//TESTING CODE
-void updateDeviceLine() {
-  int16_t w = tft.width();
-  int16_t y0 = 40;
-
-  // Clear only the area of the device line
-  tft.fillRect(10, y0-18, w-20, 40, ILI9341_BLACK);
-
-  // Redraw with highlight if focused
-  if (focusIndex == 0)
-    tft.fillRect(10, y0-18, w-20, 40, ILI9341_DARKGREY);
-
-  tft.setTextSize(2);
-  tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-  tft.setCursor(20, y0);
-  tft.print("Device: ");
-  tft.print(selectedDevice);
-  tft.printf("(%d)", totalDevices);
-}
-
-void updateValueLine() 
-{
-  int16_t w = tft.width();
-  int16_t y1 = 80;
-
-  tft.fillRect(10, y1-18, w-20, 40, ILI9341_BLACK);
-
-  if (focusIndex == 1)
-    tft.fillRect(10, y1-18, w-20, 40, ILI9341_DARKGREY);
-
-  tft.setTextSize(2);
-  tft.setCursor(20, y1);
-  tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-  tft.print("Value: ");
-  tft.print(selectedValue);
-}
-//ALSO TESTING CODE
-
 void sendToDevice(int deviceId, int value) 
 {
   SimpleList<uint32_t> nodes = mesh.getNodeList();
@@ -321,8 +273,6 @@ void sendToDevice(int deviceId, int value)
 void receivedCallback(uint32_t from, String &msg) 
 {
   Serial.printf("⬅️  Got `%s` from Node %u\n", msg.c_str(), from);
-  timeSinceLastCallback = millis(); // gets the current time of callback
-
 }
 
 void initMesh() 
@@ -333,15 +283,8 @@ void initMesh()
   mesh.onReceive(&receivedCallback);
   mesh.onNewConnection([](uint32_t nodeId){
     Serial.printf("🔗 New connection to Node %u\n", nodeId);
-    totalDevices = totalDevices + 1;
-    if(!totalDevices)
-    {
-      // drawNoConnectionPage();
-    }
-    else
-    {
-      // drawSendPage();
-    }
+    totalDevices++;
+    drawSendPage();
 
   });
   mesh.onChangedConnections([](){
@@ -349,6 +292,20 @@ void initMesh()
   });
   mesh.onNodeTimeAdjusted([](int32_t offset){
     Serial.printf("⏱ Time adjusted by %d ms\n", offset);
+  });
+
+  mesh.onDroppedConnection([](uint32_t nodeId){
+    Serial.printf("Lost connection to Node %u\n", nodeId);
+    totalDevices--;
+    if(!totalDevices)
+    {
+      drawNoConnectionPage();
+    }
+    else
+    {
+      drawSendPage();
+    }
+
   });
 
   mesh.setContainsRoot();
