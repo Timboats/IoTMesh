@@ -26,6 +26,7 @@
 #define MESH_PORT 5555 // Mesh port
 #define SCREEN_WIDTH 320 // LCD display width, in pixels
 #define SCREEN_HEIGHT 240 // LCD display height, in pixels
+#define MAX_DISCONNECT_TIMEOUT 5000 // max time til last callback in ms
 
 // OTA defines
 #define OTA_SSID "KTTREM" // hotspot ssid

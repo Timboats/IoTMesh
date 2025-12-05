@@ -6,12 +6,11 @@
 #include "painlessMesh.h"      // Mesh WiFi
 #include <cppQueue.h>          // Queue
 #include <StackArray.h>        // stack (https://github.com/oogre/StackArray)
-#include <Adafruit_GFX.h>      // For TFT LCD Screen
-#include "Adafruit_ILI9341.h"  // For TFT LCD Screen
 #include "ShiftIn.h"
 #include <math.h>
 #include "ArduinoOTA.h"
 #include <WiFi.h>
+#include <TFT_eSPI.h>
 
 
 // TASK HANDLERS
@@ -38,7 +37,7 @@ void receivedCallback(uint32_t from, String &msg);
 void initMesh();
 
 // PERIPHERALS
-Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, SPI_MOSI, SPI_SCK, TFT_RST, SPI_MISO); // Bad practice to have globals but for simplicity in this example we will do it
+TFT_eSPI tft = TFT_eSPI();
 
 // Global vars
 bool otaEnable = false;
@@ -49,6 +48,8 @@ uint8_t focusIndex = 0;
 
 unsigned long lastDebounce = 0; // for input buttons
 const unsigned long DEBOUNCE_DELAY = 200;
+
+unsigned long timeSinceLastCallback = 0;
 int totalDevices = 0;
 
 
@@ -145,6 +146,12 @@ void loop()
   #endif
 
   mesh.update();
+
+  // Device connection check
+  if((millis() - timeSinceLastCallback) > MAX_DISCONNECT_TIMEOUT)
+  {
+    // drawNoConnectionPage();
+  }
 
   // —— SWITCH FOCUS ——
   if(pressed(DPAD_UP) || pressed(DPAD_DOWN)) 
@@ -331,6 +338,8 @@ void sendToDevice(int deviceId, int value)
 void receivedCallback(uint32_t from, String &msg) 
 {
   Serial.printf("⬅️  Got `%s` from Node %u\n", msg.c_str(), from);
+  timeSinceLastCallback = millis(); // gets the current time of callback
+
 }
 
 void initMesh() 
@@ -342,6 +351,14 @@ void initMesh()
   mesh.onNewConnection([](uint32_t nodeId){
     Serial.printf("🔗 New connection to Node %u\n", nodeId);
     totalDevices = totalDevices + 1;
+    if(!totalDevices)
+    {
+      // drawNoConnectionPage();
+    }
+    else
+    {
+      // drawSendPage();
+    }
 
   });
   mesh.onChangedConnections([](){
