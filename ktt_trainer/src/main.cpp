@@ -52,7 +52,7 @@ void setUpMesh() {
   mesh.onNodeTimeAdjusted(&nodeTimeAdjustedCallback);
 
   // Tells nodes that there is a root and to connect to it
-  mesh.setContainsRoot();
+  mesh.setContainsRoot(false);
 
   userScheduler.addTask( taskSendMessage );
   taskSendMessage.enable();
