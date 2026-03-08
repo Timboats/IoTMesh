@@ -23,6 +23,8 @@ typedef struct struct_message {
 
 struct_message outgoingData;
 struct_message incomingData;
+struct_message testData;
+
 
 // ─── PERIPHERALS ───────────────────────────────────────────────────────────────
 TFT_eSPI tft = TFT_eSPI();
@@ -45,6 +47,7 @@ void drawSendPage();
 void drawNoConnectionPage();
 bool pressed(uint8_t pin);
 int  connectedCount();
+uint8_t broadcastAddr[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  SETUP
@@ -124,7 +127,7 @@ void setup() {
   uint8_t broadcastAddr[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
   WifiEspNow.addPeer(broadcastAddr);
 
-  drawNoConnectionPage();
+  // drawNoConnectionPage();
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -138,7 +141,7 @@ void loop() {
   #endif
 
   if (connectedCount() == 0 && currentPage != NO_CONNECT_PAGE) {
-    drawNoConnectionPage();
+    // drawNoConnectionPage();
   }
 
   if (currentPage == SEND_PAGE) {
@@ -177,14 +180,21 @@ void loop() {
       drawSendPage();
     }
   }
+  outgoingData.messageType  = 1;
+  outgoingData.tempo        = 0;
+  outgoingData.timestamp    = millis();
+  outgoingData.targetDevice = 1;
+  outgoingData.senderId     = 0;
+  WifiEspNow.send(broadcastAddr, (const uint8_t*)&testData, sizeof(testData));
 
-  delay(10);
+  delay(1000);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  RECEIVE CALLBACK
 // ═══════════════════════════════════════════════════════════════════════════════
 void onReceive(const uint8_t mac[6], const uint8_t* buf, size_t count, void* arg) {
+  tft.println("Receieved data!!!");
   if (count != sizeof(struct_message)) return;
 
   memcpy(&incomingData, buf, sizeof(incomingData));
