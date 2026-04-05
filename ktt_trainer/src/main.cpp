@@ -22,7 +22,7 @@ void setup()
 }
 
 unsigned long prev_time = 0;
-void lopp()
+void loop()
 {
   unsigned long curr_time = millis();
   if(curr_time - prev_time > 500)
