@@ -33,6 +33,8 @@ void nodeTimeAdjustedCallback(int32_t offset);
   // WiFi COMMUNICATION MESSAGE
   int lastValue = 0;
   String receivedMsg;
+  unsigned long lastRSSIPrint = 0;
+  const unsigned long rssiInterval = 1000; // 1 second
 
 // INITIALIZING OBJECTS
 Scheduler userScheduler; // to control your personal task
@@ -129,6 +131,14 @@ unsigned long blinkTempo(int tempo, unsigned long lastBlinkTime) {
 }
 
 void loop() {
+    if (millis() - lastRSSIPrint > rssiInterval) {
+      lastRSSIPrint = millis();
+
+      Serial.print("RSSI: ");
+      Serial.print(WiFi.RSSI());
+      Serial.println(" dBm");
+      mesh.sendSingle(getRootId(mesh.asNodeTree()), "RSSI:" + String(WiFi.RSSI()));
+    }
     mesh.update();
     //analogWrite(ledPin, lastValue / 4);
     //Serial.printf("output value: %d\n", lastValue / 4);

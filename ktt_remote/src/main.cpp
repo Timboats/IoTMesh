@@ -271,6 +271,13 @@ void sendToDevice(int deviceId, int value)
 
 void receivedCallback(uint32_t from, String &msg) 
 {
+  if (msg.startsWith("RSSI:")) {
+    int rssi = msg.substring(5).toInt();
+    Serial.print("Trainer RSSI: ");
+    Serial.print(rssi);
+    Serial.println(" dBm");
+    return;
+  }
   Serial.printf("⬅️  Got `%s` from Node %u\n", msg.c_str(), from);
 }
 
