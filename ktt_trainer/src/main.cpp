@@ -1,146 +1,33 @@
 #include <Arduino.h>
-
-// THIS IS NODE 3944100465
-
-// LIBRARIES
-#include "painlessMesh.h" // For mesh wifi
-
-// CONSTANTS
-#define   MESH_PREFIX     "IoTHub"     // Mesh WiFI name
-#define   MESH_PASSWORD   "IOAIHTHG"   // Mesh password
-#define   MESH_PORT       5555         // Mesh port
-
-// FUNCTION DECLARATIONS(PLATIO MIGRATION ADDITION)
-void receivedCallback( uint32_t from, String &msg );
-uint32_t getRootId(painlessmesh::protocol::NodeTree nodeTree);
-void newConnectionCallback(uint32_t nodeId);
-void changedConnectionCallback();
-void nodeTimeAdjustedCallback(int32_t offset);
+#include <WiFi.h>
 
 
-// GLOBAL VARIABLES
-  // PINS
-  int ledPin = 5;
-  bool ledState = false;
+const char *ssid = "Lebron";
+const char *password = "jamesking";
 
-  // TIMES
-  unsigned long timeSinceOn = millis();
-  unsigned long timeSinceUpdate = millis();
-  unsigned long timeSinceMsgReceived = millis();
-  unsigned long timeSinceDisplayUpdate = millis();
-  unsigned long lastBlinkTime = millis();
-
-  // WiFi COMMUNICATION MESSAGE
-  int lastValue = 0;
-  String receivedMsg;
-  unsigned long lastRSSIPrint = 0;
-  const unsigned long rssiInterval = 1000; // 1 second
-
-// INITIALIZING OBJECTS
-Scheduler userScheduler; // to control your personal task
-painlessMesh  mesh;
-void sendMessage() ; // Prototype so PlatformIO doesn't complain
-Task taskSendMessage( TASK_SECOND * 1 , TASK_FOREVER, &sendMessage );
-
-void setUpMesh() {
-  //mesh.setDebugMsgTypes( ERROR | MESH_STATUS | CONNECTION | SYNC | COMMUNICATION | GENERAL | MSG_TYPES | REMOTE ); // all types on
-  //mesh.setDebugMsgTypes( ERROR | STARTUP );  // set before init() so that you can see startup messages
-  mesh.setDebugMsgTypes( CONNECTION | SYNC );
-
-  mesh.init( MESH_PREFIX, MESH_PASSWORD, &userScheduler, MESH_PORT );
-  mesh.onReceive(&receivedCallback);
-  mesh.onNewConnection(&newConnectionCallback);
-  mesh.onChangedConnections(&changedConnectionCallback);
-  mesh.onNodeTimeAdjusted(&nodeTimeAdjustedCallback);
-
-  // Tells nodes that there is a root and to connect to it
-  mesh.setContainsRoot(false);
-
-  userScheduler.addTask( taskSendMessage );
-  taskSendMessage.enable();
-}
-
-void setup() {
+void setup()
+{
   Serial.begin(115200);
-  
-  pinMode(ledPin, OUTPUT);
-  
-  setUpMesh();
-}
-
-// Send message to root
-void sendMessage() {
-  String msg = "Callback:" + receivedMsg;
-  uint32_t rootId = getRootId(mesh.asNodeTree());
-  Serial.printf("sending %s to %u\n", msg, rootId);
-  mesh.sendSingle(rootId, msg);
-  if(atoi(receivedMsg.c_str()) == -2) {
-    taskSendMessage.setInterval( random( TASK_SECOND * 1, TASK_SECOND * 1.5)); 
-  } else {
-    taskSendMessage.setInterval( random( TASK_SECOND * 0.1, TASK_SECOND * 0.2 ));
-  }
-}
-
-// Recieve message
-void receivedCallback( uint32_t from, String &msg ) {
-  Serial.printf("startHere: Received from %u msg=%s\n", from, msg.c_str());
-  receivedMsg = msg.c_str();
-  timeSinceMsgReceived = millis();
-  if(atoi(msg.c_str()) != 0) {
-    if(atoi(msg.c_str()) == -1) {
-      lastValue = 0;  
-    } else if(atoi(msg.c_str()) != -2) {
-      lastValue = atoi(msg.c_str());
-    }
-  }
-}
-
-uint32_t getRootId(painlessmesh::protocol::NodeTree nodeTree) {
-  if (nodeTree.root) return nodeTree.nodeId;
-  for (auto&& s : nodeTree.subs) {
-    auto id = getRootId(s);
-    if (id != 0) return id;
-  }
-  return 0;
-}
-
-void newConnectionCallback(uint32_t nodeId) {
-    Serial.printf("--> startHere: New Connection, nodeId = %u\n", nodeId);
-}
-
-void changedConnectionCallback() {
-  Serial.printf("Changed connections\n");
-}
-
-void nodeTimeAdjustedCallback(int32_t offset) {
-  Serial.printf("Adjusted time %u. Offset = %d\n", mesh.getNodeTime(),offset);
-}
-
-unsigned long blinkTempo(int tempo, unsigned long lastBlinkTime) {
-  unsigned long newBlinkTime = lastBlinkTime;
-  //Serial.printf("millis() - tempo/1024 * 1000 > lastBlinkTime: %d - %d > %d\n", millis(), tempo, lastBlinkTime);
-  float bpm = (60000.0 / tempo) * 4;
-  if (millis() * 1000 - bpm * 1000 > lastBlinkTime * 1000) {
-    Serial.printf("ledState %d\n", ledState);
-    digitalWrite(ledPin, ledState);
-    ledState = !ledState;
-    newBlinkTime = millis();
+  Serial.println();
+  Serial.println("Configuring client...");
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+  Serial.print("Connecting to WiFi ..");
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.print('.');
+    delay(1000);
   }
 
-  return newBlinkTime;
+  Serial.println(WiFi.localIP());
 }
 
-void loop() {
-    if (millis() - lastRSSIPrint > rssiInterval) {
-      lastRSSIPrint = millis();
-
-      Serial.print("RSSI: ");
-      Serial.print(WiFi.RSSI());
-      Serial.println(" dBm");
-      mesh.sendSingle(getRootId(mesh.asNodeTree()), "RSSI:" + String(WiFi.RSSI()));
-    }
-    mesh.update();
-    //analogWrite(ledPin, lastValue / 4);
-    //Serial.printf("output value: %d\n", lastValue / 4);
-    lastBlinkTime = blinkTempo(lastValue, lastBlinkTime);
+unsigned long prev_time = 0;
+void lopp()
+{
+  unsigned long curr_time = millis();
+  if(curr_time - prev_time > 500)
+  {
+    Serial.printf("RSSI: %ddB\n", WiFi.RSSI());
+    prev_time = curr_time;
+  }
 }
