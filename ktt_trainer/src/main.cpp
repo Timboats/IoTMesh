@@ -60,8 +60,21 @@ void setUpMesh() {
 
 void setup() {
   Serial.begin(115200);
-  
   pinMode(ledPin, OUTPUT);
+
+  Serial.println("Running start up blink");
+
+  long currTime = millis();
+
+  while(millis() - currTime < 6000)
+  {
+    digitalWrite(ledPin, HIGH);
+    delay(200);
+    digitalWrite(ledPin, LOW);
+    delay(200);
+  }
+  
+  Serial.println("Finished start up test");
   
   setUpMesh();
 }
