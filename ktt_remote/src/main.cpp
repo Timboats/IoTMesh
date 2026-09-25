@@ -117,7 +117,7 @@ void setup()
   #endif
 
   tft.begin();
-  tft.setRotation(3);  // Landscape mode
+  tft.setRotation(1);  // Landscape mode
 
   initMesh();
   drawNoConnectionPage();
