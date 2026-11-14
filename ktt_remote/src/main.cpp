@@ -2,6 +2,7 @@
 #include "config.h"
 
 
+
 // LIBRARIES
 #include "painlessMesh.h"      // Mesh WiFi
 #include <cppQueue.h>          // Queue
@@ -11,6 +12,8 @@
 #include "ArduinoOTA.h"
 #include <WiFi.h>
 #include <TFT_eSPI.h>
+
+#include "esp_sleep.h"
 
 
 // TASK HANDLERS
@@ -32,6 +35,9 @@ void sendToDevice(int deviceId, int value);
 void receivedCallback(uint32_t from, String &msg);
 void initMesh();
 
+void enterSleepMode();
+void wakeDisplay();
+
 // PERIPHERALS
 TFT_eSPI tft = TFT_eSPI();
 
@@ -45,6 +51,8 @@ uint8_t currentPage = NO_CONNECT_PAGE;
 
 unsigned long lastDebounce = 0; // for input buttons
 const unsigned long DEBOUNCE_DELAY = 200;
+
+bool displaySleeping = false;
 
 
 
@@ -117,10 +125,13 @@ void setup()
   #endif
 
   tft.begin();
-  tft.setRotation(3);  // Landscape mode
+  tft.setRotation(1);  // Landscape mode
 
   initMesh();
-  drawNoConnectionPage();
+  //drawNoConnectionPage();
+  // TEMPORARY LOW-POWER TEST MODE
+drawSendPage();
+
   // initializeTFT();
   /*
   #the stuff below can be replaced
@@ -146,12 +157,34 @@ void loop()
   // —— SWITCH FOCUS ——
   if(currentPage == SEND_PAGE)
   {
-    if(pressed(DPAD_UP) || pressed(DPAD_DOWN)) 
+    if (!displaySleeping && digitalRead(ENTER_BUTTON) == LOW && digitalRead(DPAD_DOWN) == LOW)
+    {
+      delay(50); // simple debounce for combination
+
+      // Make sure both buttons are still held
+      if (digitalRead(ENTER_BUTTON) == LOW &&
+          digitalRead(DPAD_DOWN) == LOW)
+          {
+            enterSleepMode();
+          }
+    }
+    // UP -> display wake
+    else if (displaySleeping && digitalRead(DPAD_UP) == LOW)
+    {
+        delay(50);
+
+        if (digitalRead(DPAD_UP) == LOW)
+        {
+            wakeDisplay();
+        }
+    }
+    
+    else if(!displaySleeping && (pressed(DPAD_UP) || pressed(DPAD_DOWN))) 
     {
       focusIndex = 1 - focusIndex;
       drawSendPage();
     }
-    else if(pressed(DPAD_LEFT)) 
+    else if(!displaySleeping && pressed(DPAD_LEFT)) 
     {
       if(focusIndex == 0) 
       {
@@ -165,7 +198,7 @@ void loop()
       }
       //drawSendPage();
     }
-    else if(pressed(DPAD_RIGHT)) 
+    else if(!displaySleeping && pressed(DPAD_RIGHT)) 
     {
       if(focusIndex == 0) 
       {
@@ -179,7 +212,7 @@ void loop()
       }
       //drawSendPage();
     }
-    else if(pressed(ENTER_BUTTON)) 
+    else if(!displaySleeping && pressed(ENTER_BUTTON)) 
     {
       sendToDevice(selectedDevice, selectedValue);
       tft.fillScreen(ILI9341_BLACK);
@@ -190,7 +223,7 @@ void loop()
       delay(800);
       drawSendPage();
     }
-    else if(pressed(BACK_BUTTON)) 
+    else if(!displaySleeping && pressed(BACK_BUTTON)) 
     {
     focusIndex = 0;
     drawSendPage();
@@ -325,4 +358,106 @@ void drawNoConnectionPage()
   tft.setTextColor(ILI9341_RED);
   tft.print("No Trainer Connected!");
 
+}
+
+//EXTRA METHODS FOR SLEEP MODE HANLDING
+void enterSleepMode()
+{
+  Serial.println("Putting display to sleep...");
+
+    // Turn display off
+    tft.writecommand(0x28);
+    delay(5);
+
+    // Put ILI9341 into sleep mode
+    tft.writecommand(0x10);
+    delay(5);
+
+    displaySleeping = true;
+  /*
+  Serial.println("Entering sleep mode...");
+
+  // Turn the ILI9341 display off
+  tft.writecommand(0x28);   // Display OFF
+  delay(5);
+
+  // Put the ILI9341 into sleep mode
+  tft.writecommand(0x10);   // Sleep IN
+  delay(5);
+
+  while (digitalRead(ENTER_BUTTON) == LOW ||
+       digitalRead(DPAD_DOWN) == LOW)
+        {
+            delay(10);
+        }
+
+  
+   //Configure ENTER_BUTTON as the wake-up source.
+   //Button is active LOW, so wake when it goes LOW.
+  esp_sleep_enable_ext0_wakeup(
+      (gpio_num_t) DPAD_UP,
+      0
+  );
+
+  Serial.println("ESP32 entering light sleep.");
+
+  // Put ESP32 into light sleep
+  esp_light_sleep_start();
+
+  
+  //Execution resumes here after wake-up.
+  Serial.println("ESP32 woke up.");
+
+  wakeDisplay();
+  */
+}
+
+void wakeDisplay()
+{
+  Serial.println("Waking display...");
+
+    // Wake ILI9341
+    tft.writecommand(0x11);
+    delay(120);
+
+    // Turn display on
+    tft.writecommand(0x29);
+    delay(5);
+
+    displaySleeping = false;
+
+    // Redraw screen
+    if (currentPage == SEND_PAGE)
+    {
+        drawSendPage();
+    }
+    else
+    {
+        drawNoConnectionPage();
+    }
+
+    Serial.println("Display awake.");
+  /*
+  Serial.println("Waking display...");
+
+  // Wake ILI9341
+  tft.writecommand(0x11);   // Sleep OUT
+  delay(120);
+
+  // Turn display back on
+  tft.writecommand(0x29);   // Display ON
+  delay(5);
+
+  // Redraw whatever page we were on
+  if (currentPage == SEND_PAGE)
+  {
+    drawSendPage();
+  }
+  else
+  {
+    drawNoConnectionPage();
+  }
+
+  Serial.println("Display awake.");
+  */
 }
